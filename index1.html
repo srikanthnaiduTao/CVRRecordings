@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>Team Recordings</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: Roboto, -apple-system, Segoe UI, Arial, sans-serif;
+    background: #0f0f0f;
+    color: #f1f1f1;
+  }
+
+  /* ---- Top bar ---- */
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    padding: 10px 24px;
+    background: #0f0f0f;
+    border-bottom: 1px solid #272727;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1.15rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .brand .logo {
+    width: 30px;
+    height: 21px;
+    background: #ff0000;
+    border-radius: 6px;
+    position: relative;
+    flex-shrink: 0;
+  }
+  .brand .logo::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-45%, -50%);
+    border-style: solid;
+    border-width: 5px 0 5px 8px;
+    border-color: transparent transparent transparent #fff;
+  }
+  .search-wrap {
+    flex: 1;
+    max-width: 600px;
+    display: flex;
+  }
+  .search-box {
+    flex: 1;
+    padding: 8px 14px;
+    border-radius: 20px 0 0 20px;
+    border: 1px solid #303030;
+    border-right: none;
+    background: #121212;
+    color: #f1f1f1;
+    font-size: 0.9rem;
+    outline: none;
+  }
+  .search-box::placeholder {
+    color: #888;
+  }
+  .search-btn {
+    width: 44px;
+    border-radius: 0 20px 20px 0;
+    border: 1px solid #303030;
+    background: #202020;
+    color: #f1f1f1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: default;
+  }
+
+  /* ---- Grid (list) view ---- */
+  .content {
+    padding: 20px 24px 60px;
+  }
+  .section-heading {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #aaaaaa;
+    margin: 28px 0 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+  .section-heading::before,
+  .section-heading::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: #272727;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px 16px;
+  }
+  .card {
+    cursor: pointer;
+  }
+  .thumb {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border-radius: 10px;
+    overflow: hidden;
+    background: linear-gradient(135deg, #3a3a3a, #1a1a1a);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .thumb::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.08), transparent 60%);
+  }
+  .thumb-icon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 42%;
+    height: 42%;
+    opacity: 0.3;
+    z-index: 1;
+    pointer-events: none;
+    filter: drop-shadow(0 2px 8px rgba(0,0,0,0.35));
+  }
+  .play-icon {
+    position: relative;
+    z-index: 2;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s ease, transform 0.15s ease;
+  }
+  .card:hover .play-icon {
+    background: #ff0000;
+    transform: scale(1.08);
+  }
+  .play-icon::after {
+    content: "";
+    border-style: solid;
+    border-width: 10px 0 10px 16px;
+    border-color: transparent transparent transparent #fff;
+    margin-left: 4px;
+  }
+  .badge {
+    position: absolute;
+    bottom: 6px;
+    right: 6px;
+    background: rgba(0,0,0,0.8);
+    color: #f1f1f1;
+    font-size: 0.7rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+  .meta {
+    display: flex;
+    gap: 10px;
+    margin-top: 8px;
+  }
+  .avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #3ea6ff;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #0f0f0f;
+  }
+  .meta-text .title {
+    font-size: 0.92rem;
+    font-weight: 500;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .meta-text .sub {
+    font-size: 0.8rem;
+    color: #aaaaaa;
+    margin-top: 4px;
+  }
+  .no-results {
+    color: #888;
+    padding: 30px 4px;
+  }
+
+  /* ---- Player view: popup with blurred backdrop ---- */
+  .player-view {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    align-items: center;
+    justify-content: center;
+    padding: 30px;
+    background: rgba(15, 15, 15, 0.55);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+  .player-view.open {
+    display: flex;
+  }
+  .player-popup {
+    width: 100%;
+    max-width: 480px;
+    background: #0f0f0f;
+    border: 2px solid #ffffff;
+    border-radius: 14px;
+    padding: 16px;
+    box-shadow: 0 12px 50px rgba(0,0,0,0.7);
+  }
+  .player-top {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+  .back-close-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #272727;
+    border: none;
+    color: #f1f1f1;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .back-close-btn:hover {
+    background: #3a3a3a;
+  }
+  .player-title {
+    font-size: 1.05rem;
+    font-weight: 600;
+  }
+  .player-frame {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: #000;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+  }
+  .player-frame iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+  }
+  .frame-close-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.65);
+    border: none;
+    color: #f1f1f1;
+    font-size: 1.1rem;
+    cursor: pointer;
+    z-index: 2;
+  }
+  .frame-close-btn:hover {
+    background: rgba(255,0,0,0.85);
+  }
+  .player-fallback {
+    margin-top: 14px;
+    font-size: 0.85rem;
+    color: #aaaaaa;
+  }
+  .player-fallback a {
+    color: #3ea6ff;
+    text-decoration: none;
+  }
+  .login-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: #000;
+    border-radius: 10px;
+    text-align: center;
+    padding: 20px;
+  }
+  .login-btn {
+    background: #3ea6ff;
+    color: #0f0f0f;
+    font-weight: 600;
+    padding: 12px 22px;
+    border-radius: 20px;
+    text-decoration: none;
+    font-size: 0.95rem;
+  }
+  .login-btn:hover {
+    background: #63b7ff;
+  }
+
+  /* thin scrollbars */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: #0f0f0f; }
+  ::-webkit-scrollbar-thumb { background: #4a4a54; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #5c5c68; }
+  * { scrollbar-width: thin; scrollbar-color: #4a4a54 #0f0f0f; }
+</style>
+</head>
+<body>
+
+  <div class="topbar">
+    <div class="brand"> CVR Recordings</div>
+    <div class="search-wrap">
+      <input type="text" class="search-box" id="searchBox" placeholder="Search recordings">
+      <div class="search-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="#f1f1f1" stroke-width="2"/><line x1="16.5" y1="16.5" x2="21" y2="21" stroke="#f1f1f1" stroke-width="2" stroke-linecap="round"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="content" id="content">
+    <div id="gridArea"></div>
+  </div>
+
+  <div class="player-view" id="playerView">
+    <div class="player-popup">
+      <div class="player-top">
+        <button class="back-close-btn" id="backBtn">&larr; Close</button>
+        <div class="player-title" id="playerTitle"></div>
+      </div>
+      <div id="playerBody"></div>
+    </div>
+  </div>
+
+<script>
+// Add new recordings here — copy an object and fill in title/date/embedUrl/fileUrl
+// Kept sorted by date, newest first. "section" starts a new labeled group.
+const videos = [
+  {
+    title: "System Setup for RE",
+    date: "Aug 14, 2026",
+    duration: "24:46",
+    embedUrl: "https://taoglobal-my.sharepoint.com/personal/irshad_patel_taodigitalsolutions_com/_layouts/15/embed.aspx?id=%2Fpersonal%2Firshad_patel_taodigitalsolutions_com%2FDocuments%2FRecordings%2FSystem%20Setup%20for%20RE-20260814_160442-Meeting%20Recording.mp4",
+    fileUrl: "https://taoglobal-my.sharepoint.com/personal/irshad_patel_taodigitalsolutions_com/Documents/Recordings/System%20Setup%20for%20RE-20260814_160442-Meeting%20Recording.mp4?web=1"
+  },
+  {
+    title: "Fixed Ops Domain Training – Inventory, Ordering, QBB, Parts Master",
+    date: "Aug 6, 2026",
+    duration: "46:52",
+    embedUrl: "https://taoglobal-my.sharepoint.com/personal/sardar_shaik_taodigitalsolutions_com/_layouts/15/embed.aspx?id=%2Fpersonal%2Fsardar_shaik_taodigitalsolutions_com%2FDocuments%2FRecordings%2FFixed%20Ops%20Domain%20Training%20%E2%80%93%20Inventory%20%20Ordering%20%20QBB%20%20Parts%20Master-20260806_143653-Meeting%20Recording.mp4",
+    fileUrl: "https://taoglobal-my.sharepoint.com/personal/sardar_shaik_taodigitalsolutions_com/Documents/Recordings/Fixed%20Ops%20Domain%20Training%20%E2%80%93%20Inventory%20%20Ordering%20%20QBB%20%20Parts%20Master-20260806_143653-Meeting%20Recording.mp4?web=1"
+  },
+  {
+    title: "Training Session 1 – DevOps, Harness, Sonar, New Relic, Cribl Cloud, Observability & Git Setup",
+    date: "Aug 5, 2026",
+    duration: "47:14",
+    embedUrl: "https://taoglobal-my.sharepoint.com/personal/sardar_shaik_taodigitalsolutions_com/_layouts/15/embed.aspx?id=%2Fpersonal%2Fsardar_shaik_taodigitalsolutions_com%2FDocuments%2FRecordings%2FTraining%20Session%201%20%E2%80%93%20DevOps%2C%20Harness%2C%20Sonar%2C%20New%20Relic%2C%20Cribl%20Cloud%2C%20Observability%20_%20Git%20Setup-20260805_143412-Meeting%20Recording.mp4",
+    fileUrl: "https://taoglobal-my.sharepoint.com/personal/sardar_shaik_taodigitalsolutions_com/Documents/Recordings/Training%20Session%201%20%E2%80%93%20DevOps%2C%20Harness%2C%20Sonar%2C%20New%20Relic%2C%20Cribl%20Cloud%2C%20Observability%20_%20Git%20Setup-20260805_143412-Meeting%20Recording.mp4?web=1"
+  },
+  {
+    title: "CVR existing Architecture Walkthrough",
+    date: "Aug 5, 2026",
+    duration: "1:11:47",
+    embedUrl: "https://taoglobal-my.sharepoint.com/personal/sardar_shaik_taodigitalsolutions_com/_layouts/15/embed.aspx?id=%2Fpersonal%2Fsardar_shaik_taodigitalsolutions_com%2FDocuments%2FRecordings%2FCVR%20Architecture%20walkthrough-20260804_121319-Meeting%20Recording.mp4",
+    fileUrl: "https://taoglobal-my.sharepoint.com/personal/sardar_shaik_taodigitalsolutions_com/Documents/Recordings/CVR%20Architecture%20walkthrough-20260804_121319-Meeting%20Recording.mp4?web=1"
+  },
+  {
+    title: "Training Session for React,git, harness, nebula - Dev Team",
+    date: "Aug 4, 2026",
+    duration: "43:38",
+    embedUrl: "https://taoglobal-my.sharepoint.com/personal/sneha_gupta_taodigitalsolutions_com/_layouts/15/embed.aspx?id=%2Fpersonal%2Fsneha_gupta_taodigitalsolutions_com%2FDocuments%2FRecordings%2FMeeting%20in%20CVR%20-%20Dev%20Team-20260804_160539-Meeting%20Recording.mp4",
+    fileUrl: "https://taoglobal-my.sharepoint.com/personal/sneha_gupta_taodigitalsolutions_com/Documents/Recordings/Meeting%20in%20CVR%20-%20Dev%20Team-20260804_160539-Meeting%20Recording.mp4?web=1"
+  },
+  {
+    title: "CVR  praposed Architecture Walkthrough",
+    date: "Aug 3, 2026",
+    duration: "1:07:11",
+    embedUrl: "https://taoglobal-my.sharepoint.com/personal/sardar_shaik_taodigitalsolutions_com/_layouts/15/embed.aspx?id=%2Fpersonal%2Fsardar_shaik_taodigitalsolutions_com%2FDocuments%2FRecordings%2FCVR%20Architecture%20walkthrough-20260803_122556-Meeting%20Recording.mp4",
+    fileUrl: "https://taoglobal-my.sharepoint.com/personal/sardar_shaik_taodigitalsolutions_com/Documents/Recordings/CVR%20Architecture%20walkthrough-20260803_122556-Meeting%20Recording.mp4?web=1"
+  },
+  {
+    title: "CVR Modernization Queries & Clarifications",
+    date: "Apr 2, 2026",
+    duration: "58:14",
+    embedUrl: "https://taoglobal.sharepoint.com/teams/CDKGlobal-ProposalstoCDK/_layouts/15/embed.aspx?id=%2Fteams%2FCDKGlobal-ProposalstoCDK%2FShared%20Documents%2FCVR%20Modernization%2FJim%20N%20-%20documents%20from%20CDK%2FRecordings%2FCVR%20Modernization%20QueriesClarifications-20260402_223205-Meeting%20Recording.mp4",
+    fileUrl: "https://taoglobal.sharepoint.com/:v:/r/teams/CDKGlobal-ProposalstoCDK/Shared%20Documents/CVR%20Modernization/Jim%20N%20-%20documents%20from%20CDK/Recordings/CVR%20Modernization%20QueriesClarifications-20260402_223205-Meeting%20Recording.mp4?d=waa18940b3ee546559a7e887d4bb44094&csf=1&web=1&e=QNCMl2&nav=eyJyZWZlcnJhbEluZm8iOnsicmVmZXJyYWxBcHAiOiJTdHJlYW1XZWJBcHAiLCJyZWZlcnJhbFZpZXciOiJTaGFyZURpYWxvZy1MaW5rIiwicmVmZXJyYWxBcHBQbGF0Zm9ybSI6IldlYiIsInJlZmVycmFsTW9kZSI6InZpZXcifX0%3D"
+  },
+  {
+    title: "MI Connect eSign Demo",
+    date: "Jan 23, 2026",
+    duration: "6:46",
+    embedUrl: "https://taoglobal.sharepoint.com/teams/CDKGlobal-ProposalstoCDK/_layouts/15/embed.aspx?id=%2Fteams%2FCDKGlobal-ProposalstoCDK%2FShared%20Documents%2FCVR%20Modernization%2FJim%20N%20-%20documents%20from%20CDK%2FRecordings%2FMI%20Connect%20eSign%20Demo%20Video%2001232026%201.mp4",
+    fileUrl: "https://taoglobal.sharepoint.com/:v:/r/teams/CDKGlobal-ProposalstoCDK/Shared%20Documents/CVR%20Modernization/Jim%20N%20-%20documents%20from%20CDK/Recordings/MI%20Connect%20eSign%20Demo%20Video%2001232026%201.mp4?d=wa2da79a7da184b0e8cbeae39d67403fb&csf=1&web=1&e=aYg3We&nav=eyJyZWZlcnJhbEluZm8iOnsicmVmZXJyYWxBcHAiOiJTdHJlYW1XZWJBcHAiLCJyZWZlcnJhbFZpZXciOiJTaGFyZURpYWxvZy1MaW5rIiwicmVmZXJyYWxBcHBQbGF0Zm9ybSI6IldlYiIsInJlZmVycmFsTW9kZSI6InZpZXcifX0%3D"
+  },
+  {
+    title: "NC Connect Demo",
+    date: "",
+    duration: "6:10",
+    embedUrl: "https://taoglobal.sharepoint.com/teams/CDKGlobal-ProposalstoCDK/_layouts/15/embed.aspx?id=%2Fteams%2FCDKGlobal-ProposalstoCDK%2FShared%20Documents%2FCVR%20Modernization%2FJim%20N%20-%20documents%20from%20CDK%2FRecordings%2FNC_Connect_Demo.mp4",
+    fileUrl: "https://taoglobal.sharepoint.com/:v:/r/teams/CDKGlobal-ProposalstoCDK/Shared%20Documents/CVR%20Modernization/Jim%20N%20-%20documents%20from%20CDK/Recordings/NC_Connect_Demo.mp4?d=w53dfb7372b634a73bcedeed18a5d4018&csf=1&web=1&e=RHL5e5"
+  },
+  {
+    title: "MD EVR Demo - Part 1",
+    date: "",
+    duration: "17:49",
+    embedUrl: "https://taoglobal.sharepoint.com/teams/CDKGlobal-ProposalstoCDK/_layouts/15/embed.aspx?id=%2Fteams%2FCDKGlobal-ProposalstoCDK%2FShared%20Documents%2FCVR%20Modernization%2FJim%20N%20-%20documents%20from%20CDK%2FRecordings%2FMD%20EVR%20-%20Demo%20-%20Part%201.mp4",
+    fileUrl: "https://taoglobal.sharepoint.com/:v:/r/teams/CDKGlobal-ProposalstoCDK/Shared%20Documents/CVR%20Modernization/Jim%20N%20-%20documents%20from%20CDK/Recordings/MD%20EVR%20-%20Demo%20-%20Part%201.mp4?d=w84eed307cd8642c6bdd335e02590a2e2&csf=1&web=1&e=QrM3Kk&nav=eyJyZWZlcnJhbEluZm8iOnsicmVmZXJyYWxBcHAiOiJTdHJlYW1XZWJBcHAiLCJyZWZlcnJhbFZpZXciOiJTaGFyZURpYWxvZy1MaW5rIiwicmVmZXJyYWxBcHBQbGF0Zm9ybSI6IldlYiIsInJlZmVycmFsTW9kZSI6InZpZXcifX0%3D"
+  },
+  {
+    title: "MD EVR Demo - Part 2",
+    date: "",
+    duration: "15:26",
+    embedUrl: "https://taoglobal.sharepoint.com/teams/CDKGlobal-ProposalstoCDK/_layouts/15/embed.aspx?id=%2Fteams%2FCDKGlobal-ProposalstoCDK%2FShared%20Documents%2FCVR%20Modernization%2FJim%20N%20-%20documents%20from%20CDK%2FRecordings%2FMD%20EVR%20-%20Demo%20-%20Part%202.mp4",
+    fileUrl: "https://taoglobal.sharepoint.com/:v:/r/teams/CDKGlobal-ProposalstoCDK/Shared%20Documents/CVR%20Modernization/Jim%20N%20-%20documents%20from%20CDK/Recordings/MD%20EVR%20-%20Demo%20-%20Part%202.mp4?d=w5d730f40c55447ff9e034fedc29fc591&csf=1&web=1&e=xbxZka&nav=eyJyZWZlcnJhbEluZm8iOnsicmVmZXJyYWxBcHAiOiJTdHJlYW1XZWJBcHAiLCJyZWZlcnJhbFZpZXciOiJTaGFyZURpYWxvZy1MaW5rIiwicmVmZXJyYWxBcHBQbGF0Zm9ybSI6IldlYiIsInJlZmVycmFsTW9kZSI6InZpZXcifX0%3D"
+  },
+  {
+    title: "User Account Setup in Pennsylvania Connect",
+    date: "",
+    duration: "9:34",
+    embedUrl: "https://taoglobal.sharepoint.com/teams/CDKGlobal-ProposalstoCDK/_layouts/15/embed.aspx?id=%2Fteams%2FCDKGlobal-ProposalstoCDK%2FShared%20Documents%2FCVR%20Modernization%2FJim%20N%20-%20documents%20from%20CDK%2FRecordings%2FUser%20Account%20Setup%20in%20Pennsylvania%20Connect.mp4",
+    fileUrl: "https://taoglobal.sharepoint.com/:v:/r/teams/CDKGlobal-ProposalstoCDK/Shared%20Documents/CVR%20Modernization/Jim%20N%20-%20documents%20from%20CDK/Recordings/User%20Account%20Setup%20in%20Pennsylvania%20Connect.mp4?d=w7c0874f9e3b04659a8f96ce8bbd1d222&csf=1&web=1&e=B1lypa&nav=eyJyZWZlcnJhbEluZm8iOnsicmVmZXJyYWxBcHAiOiJTdHJlYW1XZWJBcHAiLCJyZWZlcnJhbFZpZXciOiJTaGFyZURpYWxvZy1MaW5rIiwicmVmZXJyYWxBcHBQbGF0Zm9ybSI6IldlYiIsInJlZmVycmFsTW9kZSI6InZpZXcifX0%3D"
+  },
+  {
+    title: "SC - Product Demo",
+    date: "",
+    duration: "1:03:54",
+    embedUrl: "https://taoglobal.sharepoint.com/teams/CDKGlobal-ProposalstoCDK/_layouts/15/embed.aspx?id=%2Fteams%2FCDKGlobal-ProposalstoCDK%2FShared%20Documents%2FCVR%20Modernization%2FJim%20N%20-%20documents%20from%20CDK%2FRecordings%2FSC%20-%20Product%20Demo.mp4",
+    fileUrl: "https://taoglobal.sharepoint.com/:v:/r/teams/CDKGlobal-ProposalstoCDK/Shared%20Documents/CVR%20Modernization/Jim%20N%20-%20documents%20from%20CDK/Recordings/SC%20-%20Product%20Demo.mp4?d=w22f235ac59a4482ab633a225fb822dbb&csf=1&web=1&e=x4DScU&nav=eyJyZWZlcnJhbEluZm8iOnsicmVmZXJyYWxBcHAiOiJTdHJlYW1XZWJBcHAiLCJyZWZlcnJhbFZpZXciOiJTaGFyZURpYWxvZy1MaW5rIiwicmVmZXJyYWxBcHBQbGF0Zm9ybSI6IldlYiIsInJlZmVycmFsTW9kZSI6InZpZXcifX0%3D"
+  },
+  {
+    title: "PA Web App Architecture",
+    date: "Aug 17, 2026",
+    duration: "17:26",
+    section: "CDK Login",
+    embedUrl: "https://globalcdk-my.sharepoint.com/personal/alok_balda_cdk_com/_layouts/15/embed.aspx?id=%2Fpersonal%2Falok_balda_cdk_com%2FDocuments%2FRecordings%2FPA%20Connect%20Demo%201-17th%20Aug%202026.mp4",
+    fileUrl: "https://globalcdk-my.sharepoint.com/personal/alok_balda_cdk_com/Documents/Recordings/PA%20Connect%20Demo%201-17th%20Aug%202026.mp4?web=1",
+    summaryUrl: "summaries/PA-Web-App-Architecture-Summary.pdf"
+  },
+  {
+    title: "MAEVR Demo 2",
+    date: "Aug 17, 2026",
+    duration: "1:30:47",
+    embedUrl: "https://globalcdk-my.sharepoint.com/personal/alok_balda_cdk_com/_layouts/15/embed.aspx?id=%2Fpersonal%2Falok_balda_cdk_com%2FDocuments%2FRecordings%2FMAEVR%20Demo%202-17th%20Aug%202026.mp4",
+    fileUrl: "https://globalcdk-my.sharepoint.com/personal/alok_balda_cdk_com/Documents/Recordings/MAEVR%20Demo%202-17th%20Aug%202026.mp4?web=1",
+    summaryUrl: "summaries/MAEVR-Demo-2-Summary.pdf"
+  },
+  {
+    title: "MA Demo - Part 2",
+    date: "Aug 14, 2026",
+    duration: "1:49:38",
+    embedUrl: "https://globalcdk-my.sharepoint.com/personal/vishal_agarwal_cdk_com/_layouts/15/embed.aspx?id=%2Fpersonal%2Fvishal_agarwal_cdk_com%2FDocuments%2FRecordings%2FMA%20Demo-20260814_194324-Meeting%20Recording.mp4",
+    fileUrl: "https://globalcdk-my.sharepoint.com/personal/vishal_agarwal_cdk_com/Documents/Recordings/MA%20Demo-20260814_194324-Meeting%20Recording.mp4?web=1"
+  },
+  {
+    title: "MA Demo - Part 1",
+    date: "Aug 14, 2026",
+    duration: "1:10:53",
+    embedUrl: "https://globalcdk-my.sharepoint.com/personal/vishal_agarwal_cdk_com/_layouts/15/embed.aspx?id=%2Fpersonal%2Fvishal_agarwal_cdk_com%2FDocuments%2FRecordings%2FMA%20Demo-20260814_183222-Meeting%20Recording.mp4",
+    fileUrl: "https://globalcdk-my.sharepoint.com/personal/vishal_agarwal_cdk_com/Documents/Recordings/MA%20Demo-20260814_183222-Meeting%20Recording.mp4?web=1"
+  },
+  {
+    title: "CVR Modernization Team Connect",
+    date: "Aug 13, 2026",
+    duration: "40:15",
+    embedUrl: "https://globalcdk-my.sharepoint.com/personal/vijayakrishna_bandi_cdk_com/_layouts/15/embed.aspx?id=%2Fpersonal%2Fvijayakrishna_bandi_cdk_com%2FDocuments%2FRecordings%2FCVR%20Modernization%20Team%20Connect-20260813_203648-Meeting%20Recording.mp4",
+    fileUrl: "https://globalcdk-my.sharepoint.com/personal/vijayakrishna_bandi_cdk_com/Documents/Recordings/CVR%20Modernization%20Team%20Connect-20260813_203648-Meeting%20Recording.mp4?web=1"
+  },
+  {
+    title: "MI Connect Demo",
+    date: "Aug 13, 2026",
+    duration: "1:56:58",
+    embedUrl: "https://globalcdk-my.sharepoint.com/personal/alok_balda_cdk_com/_layouts/15/embed.aspx?id=%2Fpersonal%2Falok_balda_cdk_com%2FDocuments%2FRecordings%2FMI%20Connect%20demo-20260813_183612-Meeting%20Recording.mp4",
+    fileUrl: "https://globalcdk-my.sharepoint.com/personal/alok_balda_cdk_com/Documents/Recordings/MI%20Connect%20demo-20260813_183612-Meeting%20Recording.mp4?web=1"
+  },
+  {
+    title: "MD Demo",
+    date: "Jul 31, 2026",
+    duration: "1:14:50",
+    embedUrl: "https://globalcdk-my.sharepoint.com/personal/vishal_agarwal_cdk_com/_layouts/15/embed.aspx?id=%2Fpersonal%2Fvishal_agarwal_cdk_com%2FDocuments%2FRecordings%2FMD%20Demo-20260731_190336-Meeting%20Recording.mp4",
+    fileUrl: "https://globalcdk-my.sharepoint.com/personal/vishal_agarwal_cdk_com/Documents/Recordings/MD%20Demo-20260731_190336-Meeting%20Recording.mp4?web=1"
+  },
+  {
+    title: "VAEVR Demo",
+    date: "Jul 30, 2026",
+    duration: "2:16:34",
+    embedUrl: "https://globalcdk-my.sharepoint.com/personal/vishal_agarwal_cdk_com/_layouts/15/embed.aspx?id=%2Fpersonal%2Fvishal_agarwal_cdk_com%2FDocuments%2FRecordings%2FVAEVR%20Demo-20260730_190246-Meeting%20Recording.mp4",
+    fileUrl: "https://globalcdk-my.sharepoint.com/personal/vishal_agarwal_cdk_com/Documents/Recordings/VAEVR%20Demo-20260730_190246-Meeting%20Recording.mp4?web=1"
+  }
+];
+
+const content = document.getElementById('content');
+const gridArea = document.getElementById('gridArea');
+const searchBox = document.getElementById('searchBox');
+const playerView = document.getElementById('playerView');
+const playerTitle = document.getElementById('playerTitle');
+const playerBody = document.getElementById('playerBody');
+const backBtn = document.getElementById('backBtn');
+
+let searchTerm = '';
+
+function initials(title) {
+  const words = title.trim().split(/\s+/).filter(Boolean);
+  return ((words[0] || '')[0] || '').toUpperCase();
+}
+
+// ---- Topic-based thumbnail generation ----
+// We can't pull real video frames (SharePoint isn't reachable), so each
+// recording gets a distinct gradient + icon based on its subject matter.
+const ICONS = {
+  terminal: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 9l4 3-4 3"/><path d="M12 15h6"/>',
+  code: '<polyline points="8 6 2 12 8 18"/><polyline points="16 6 22 12 16 18"/>',
+  layers: '<polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/>',
+  wrench: '<path d="M14.7 6.3a4 4 0 1 0-5.4 5.4L2 19l3 3 7.3-7.3a4 4 0 0 0 5.4-5.4l-2.8 2.8-2-2z"/>',
+  messageQuestion: '<path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 1.5-2.5 2-2.5 3.5"/><line x1="12" y1="15.5" x2="12" y2="15.51"/>',
+  pen: '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/>',
+  userCog: '<circle cx="9" cy="7" r="4"/><path d="M2 21v-2a4 4 0 0 1 4-4h3"/><circle cx="18" cy="17" r="3"/><path d="M18 13.5v1"/><path d="M18 19.5v1"/><path d="M21.1 15.25l-.87.5"/><path d="M15.77 18.25l-.87.5"/><path d="M21.1 18.75l-.87-.5"/><path d="M15.77 15.75l-.87-.5"/>',
+  mapPin: '<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/>',
+  monitorPlay: '<rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/><polygon points="10 8 16 10 10 12"/>'
+};
+const CATEGORIES = [
+  { test: /devops|sonar|new relic|cribl|observability/i, icon: 'terminal', colors: ['#134e5e', '#71b280'] },
+  { test: /react|git|dev team|nebula/i, icon: 'code', colors: ['#11998e', '#38ef7d'] },
+  { test: /architecture/i, icon: 'layers', colors: ['#5f2c82', '#49a09d'] },
+  { test: /fixed ops|inventory|ordering|qbb|parts master/i, icon: 'wrench', colors: ['#f7971e', '#ffd200'] },
+  { test: /quer(y|ies)|clarification/i, icon: 'messageQuestion', colors: ['#ff9966', '#ff5e62'] },
+  { test: /esign|signature/i, icon: 'pen', colors: ['#ee0979', '#ff6a00'] },
+  { test: /account setup|user account/i, icon: 'userCog', colors: ['#00c6ff', '#0072ff'] },
+  { test: /\bmd\b|maryland/i, icon: 'mapPin', colors: ['#f2994a', '#f2c94c'] },
+  { test: /vaevr|virginia|\bva\b/i, icon: 'mapPin', colors: ['#4568dc', '#b06ab3'] },
+  { test: /\bnc\b|carolina/i, icon: 'mapPin', colors: ['#cb2d3e', '#ef473a'] },
+  { test: /\bsc\b/i, icon: 'mapPin', colors: ['#134e5e', '#71b280'] },
+  { test: /demo/i, icon: 'monitorPlay', colors: ['#485563', '#29323c'] }
+];
+const DEFAULT_CATEGORY = { icon: 'monitorPlay', colors: ['#3a3a3a', '#1a1a1a'] };
+
+function getCategory(title) {
+  for (const cat of CATEGORIES) {
+    if (cat.test.test(title)) return cat;
+  }
+  return DEFAULT_CATEGORY;
+}
+
+function thumbIconSvg(cat) {
+  return '<svg class="thumb-icon" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.5" ' +
+    'stroke-linecap="round" stroke-linejoin="round">' + ICONS[cat.icon] + '</svg>';
+}
+
+function renderGrid() {
+  gridArea.innerHTML = '';
+  const term = searchTerm.trim().toLowerCase();
+  const filtered = videos
+    .map((v, i) => ({ v, i }))
+    .filter(({ v }) => v.title.toLowerCase().includes(term));
+
+  if (!filtered.length) {
+    gridArea.innerHTML = '<div class="no-results">No recordings match your search.</div>';
+    return;
+  }
+
+  let lastSection = null;
+  let gridDiv = null;
+
+  filtered.forEach(({ v, i }) => {
+    if (v.section && v.section !== lastSection) {
+      const heading = document.createElement('div');
+      heading.className = 'section-heading';
+      heading.textContent = v.section;
+      gridArea.appendChild(heading);
+      gridDiv = document.createElement('div');
+      gridDiv.className = 'grid';
+      gridArea.appendChild(gridDiv);
+    } else if (!gridDiv) {
+      gridDiv = document.createElement('div');
+      gridDiv.className = 'grid';
+      gridArea.appendChild(gridDiv);
+    }
+    lastSection = v.section || lastSection;
+
+    const cat = getCategory(v.title);
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML =
+      '<div class="thumb" style="background:linear-gradient(135deg, ' + cat.colors[0] + ', ' + cat.colors[1] + ')">' +
+      thumbIconSvg(cat) +
+      '<div class="play-icon"></div>' +
+      (v.duration ? '<span class="badge">' + v.duration + '</span>' : '') +
+      (v.summaryUrl ? '<span class="badge" style="left:8px;right:auto;">📄 Summary</span>' : '') +
+      '</div>' +
+      '<div class="meta">' +
+        '<div class="avatar">' + initials(v.title) + '</div>' +
+        '<div class="meta-text">' +
+          '<div class="title">' + v.title + '</div>' +
+          '<div class="sub">' + (v.date || 'Recording') + '</div>' +
+        '</div>' +
+      '</div>';
+    card.onclick = () => openVideo(i);
+    gridDiv.appendChild(card);
+  });
+}
+
+function openVideo(i) {
+  const v = videos[i];
+  playerTitle.textContent = v.title;
+  playerBody.innerHTML =
+    '<div class="player-frame">' +
+      '<button class="frame-close-btn" id="frameCloseBtn" title="Close">&#10005;</button>' +
+      '<iframe src="' + v.embedUrl + '" allowfullscreen title="' + v.title + '"></iframe>' +
+    '</div>' +
+    '<div class="player-fallback">Video not loading? <a href="' + v.fileUrl + '" target="_blank">Open it directly in SharePoint instead</a>.</div>' +
+    (v.summaryUrl ? '<div class="player-fallback"><a href="' + v.summaryUrl + '" target="_blank">📄 View meeting summary (PDF)</a></div>' : '');
+
+  document.getElementById('frameCloseBtn').addEventListener('click', closeVideo);
+
+  playerView.classList.add('open');
+}
+
+function closeVideo() {
+  playerView.classList.remove('open');
+  playerBody.innerHTML = '';
+}
+
+backBtn.addEventListener('click', closeVideo);
+playerView.addEventListener('click', (e) => {
+  if (e.target === playerView) closeVideo();
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && playerView.classList.contains('open')) closeVideo();
+});
+
+searchBox.addEventListener('input', (e) => {
+  searchTerm = e.target.value;
+  renderGrid();
+});
+
+renderGrid();
+</script>
+
+</body>
+</html>
