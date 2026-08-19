@@ -84,6 +84,49 @@
     cursor: default;
   }
 
+  /* ---- Tabs ---- */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    padding: 14px 24px 0;
+  }
+  .tab-btn {
+    background: none;
+    border: none;
+    color: #aaaaaa;
+    font-size: 0.95rem;
+    font-weight: 500;
+    padding: 10px 18px;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: color 0.15s ease, border-color 0.15s ease;
+  }
+  .tab-btn:hover {
+    color: #f1f1f1;
+  }
+  .tab-btn.active {
+    color: #f1f1f1;
+    border-bottom-color: #ff0000;
+  }
+  .tab-panel {
+    display: none;
+  }
+  .tab-panel.active {
+    display: block;
+  }
+  .doc-icon-wrap {
+    width: 100%;
+  }
+  svg.doc-icon.thumb-icon {
+    width: 34%;
+    height: 34%;
+  }
+  .empty-state {
+    color: #888;
+    padding: 40px 4px;
+    text-align: center;
+  }
+
   /* ---- Grid (list) view ---- */
   .content {
     padding: 20px 24px 60px;
@@ -341,17 +384,27 @@
 <body>
 
   <div class="topbar">
-    <div class="brand"> CVR Recordings</div>
+    <div class="brand"> CVR</div>
     <div class="search-wrap">
-      <input type="text" class="search-box" id="searchBox" placeholder="Search recordings">
+      <input type="text" class="search-box" id="searchBox" placeholder="Search">
       <div class="search-btn">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="#f1f1f1" stroke-width="2"/><line x1="16.5" y1="16.5" x2="21" y2="21" stroke="#f1f1f1" stroke-width="2" stroke-linecap="round"/></svg>
       </div>
     </div>
   </div>
 
+  <div class="tabs">
+    <button class="tab-btn active" id="tabVideosBtn">Videos</button>
+    <button class="tab-btn" id="tabDocsBtn">Documents</button>
+  </div>
+
   <div class="content" id="content">
-    <div id="gridArea"></div>
+    <div class="tab-panel active" id="videosPanel">
+      <div id="gridArea"></div>
+    </div>
+    <div class="tab-panel" id="docsPanel">
+      <div id="docsGridArea"></div>
+    </div>
   </div>
 
   <div class="player-view" id="playerView">
@@ -528,8 +581,35 @@ const videos = [
   }
 ];
 
+// Add new documents here — copy an object and fill in title/date/type/fileUrl.
+// type controls the icon/color shown on the card: "pdf", "docx", "xlsx", "pptx", or "doc" (generic).
+const documents = [
+  {
+    title: "Reverse Engineering",
+    date: "Aug 18, 2026",
+    type: "xlsx",
+    fileUrl: "https://taoglobal.sharepoint.com/:x:/r/sites/taodigitalusa.com/_layouts/15/doc2.aspx?sourcedoc=%7BEA415D9B-F10A-4F0F-BF6A-DCD562575274%7D&file=Reverse%20Engineering.xlsx&action=default&mobileredirect=true"
+  },
+  {
+    title: "CVR LEGACY APPLICATION ASSESSMENT Template",
+    date: "Aug 18, 2026",
+    type: "docx",
+    fileUrl: "https://taoglobal-my.sharepoint.com/:w:/r/personal/irshad_patel_taodigitalsolutions_com/_layouts/15/Doc.aspx?sourcedoc=%7B273560CC-9A4B-4684-B741-F4FC3A870970%7D&file=Document.docx&action=editnew&mobileredirect=true&wdPreviousSession=aac4cb07-7062-3679-a14e-ff3e50ba9882&wdNewAndOpenCt=1787035833992&wdo=4&wdOrigin=wacFileNew&wdPreviousCorrelation=3714bc66-29ca-464f-b9a8-cc47414d5dfb&wdnd=1&isSPOFile=1&xsdata=MDV8MDJ8fGYyOTA1MWI3N2QxMDRmNTdiYWNmMDhkZWZjZjU1YzVhfGNlZDgzZDQyODE4NDQ1YzlhNGMzNmE5MTJmNDU4ZjczfDB8MHw2MzkyMjYzMjc4Nzk4MjYxMjd8VW5rbm93bnxWR1ZoYlhOVFpXTjFjbWwwZVZObGNuWnBZMlY4ZXlKRFFTSTZJbFJsWVcxelgwRlVVRk5sY25acFkyVmZVMUJQVEU5R0lpd2lWaUk2SWpBdU1DNHdNREF3SWl3aVVDSTZJbGRwYmpNeUlpd2lRVTRpT2lKUGRHaGxjaUlzSWxkVUlqb3hNWDA9fDF8TDJOb1lYUnpMekU1T2pObU9USXdZVGhtTjJGaVl6UmtOMlZoTnpVd00ySTRaRFZsWkdabE1qSTNRSFJvY21WaFpDNTJNaTl0WlhOellXZGxjeTh4TnpnM01ETTFPVGcyTWpJMHw5OTlkOGM5YTRkY2Q0MWZmYmFjZjA4ZGVmY2Y1NWM1YXw5MWMwMzUyMjEzYTQ3M2E5MTJjZDEwOWYxMDRhZTFm&sdata=YTBESlBZRWs1WTNtU2FNcXZmZ1h2d0d3T0VBeFg2aHFMa0dteHRCSkc2ST0%3D&ovuser=ced83d42-8184-45c9-a4c3-6a912f458f73%2Csrikanth.naidu%40taodigitalsolutions.com"
+  },
+  // {
+  //   title: "Example Document",
+  //   date: "Aug 18, 2026",
+  //   type: "pdf",
+  //   fileUrl: "https://..."
+  // },
+];
 const content = document.getElementById('content');
 const gridArea = document.getElementById('gridArea');
+const docsGridArea = document.getElementById('docsGridArea');
+const tabVideosBtn = document.getElementById('tabVideosBtn');
+const tabDocsBtn = document.getElementById('tabDocsBtn');
+const videosPanel = document.getElementById('videosPanel');
+const docsPanel = document.getElementById('docsPanel');
 const searchBox = document.getElementById('searchBox');
 const playerView = document.getElementById('playerView');
 const playerTitle = document.getElementById('playerTitle');
@@ -670,7 +750,76 @@ document.addEventListener('keydown', (e) => {
 searchBox.addEventListener('input', (e) => {
   searchTerm = e.target.value;
   renderGrid();
+  renderDocsGrid();
 });
+
+// ---- Documents tab ----
+const DOC_ICONS = {
+  pdf:  { colors: ['#8e2de2', '#cc2b5e'], label: 'PDF' },
+  docx: { colors: ['#2b5876', '#4e4376'], label: 'DOC' },
+  xlsx: { colors: ['#11998e', '#38ef7d'], label: 'XLS' },
+  pptx: { colors: ['#f7971e', '#ffd200'], label: 'PPT' },
+  doc:  { colors: ['#485563', '#29323c'], label: 'DOC' }
+};
+
+function docIconSvg() {
+  return '<svg class="thumb-icon doc-icon" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.5" ' +
+    'stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>' +
+    '<polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/>' +
+    '<line x1="8" y1="9" x2="10" y2="9"/></svg>';
+}
+
+function renderDocsGrid() {
+  docsGridArea.innerHTML = '';
+  const term = searchTerm.trim().toLowerCase();
+  const filtered = documents.filter((d) => d.title.toLowerCase().includes(term));
+
+  if (!documents.length) {
+    docsGridArea.innerHTML = '<div class="empty-state">No documents yet — check back soon.</div>';
+    return;
+  }
+  if (!filtered.length) {
+    docsGridArea.innerHTML = '<div class="no-results">No documents match your search.</div>';
+    return;
+  }
+
+  const gridDiv = document.createElement('div');
+  gridDiv.className = 'grid';
+  docsGridArea.appendChild(gridDiv);
+
+  filtered.forEach((d) => {
+    const style = DOC_ICONS[d.type] || DOC_ICONS.doc;
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML =
+      '<div class="thumb" style="background:linear-gradient(135deg, ' + style.colors[0] + ', ' + style.colors[1] + ')">' +
+      docIconSvg() +
+      '<span class="badge">' + style.label + '</span>' +
+      '</div>' +
+      '<div class="meta">' +
+        '<div class="avatar">' + initials(d.title) + '</div>' +
+        '<div class="meta-text">' +
+          '<div class="title">' + d.title + '</div>' +
+          '<div class="sub">' + (d.date || 'Document') + '</div>' +
+        '</div>' +
+      '</div>';
+    card.onclick = () => window.open(d.fileUrl, '_blank');
+    gridDiv.appendChild(card);
+  });
+}
+
+function switchTab(tab) {
+  const showVideos = tab === 'videos';
+  tabVideosBtn.classList.toggle('active', showVideos);
+  tabDocsBtn.classList.toggle('active', !showVideos);
+  videosPanel.classList.toggle('active', showVideos);
+  docsPanel.classList.toggle('active', !showVideos);
+}
+
+tabVideosBtn.addEventListener('click', () => switchTab('videos'));
+tabDocsBtn.addEventListener('click', () => switchTab('documents'));
+
+renderDocsGrid();
 
 renderGrid();
 </script>
